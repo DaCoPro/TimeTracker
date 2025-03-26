@@ -16,6 +16,7 @@ class _StopwatchPageState extends State<StopwatchPage> {
   bool _isRunning = false;
   bool _hasStarted = false;
   bool _isSaved = false;
+  final TextEditingController _focusController = TextEditingController();
 
   void _startStopwatch() {
     if (!_isSaved) {
@@ -44,13 +45,15 @@ class _StopwatchPageState extends State<StopwatchPage> {
       _isRunning = false;
       _hasStarted = false;
       _isSaved = false;
+      _focusController.clear();
     });
   }
 
   Future<void> _saveStopwatchData() async {
     final startTime = DateTime.now().subtract(_stopwatch.elapsed);
     final endTime = DateTime.now();
-    final timerData = TimerData(startTime: startTime, endTime: endTime);
+    final focus = _focusController.text;
+    final timerData = TimerData(startTime: startTime, endTime: endTime, focus: focus);
     await TimerService.saveTimerData(timerData);
     setState(() {
       _isSaved = true; // Disable the save button after saving
@@ -98,6 +101,17 @@ class _StopwatchPageState extends State<StopwatchPage> {
                   child: Text('Save'),
                 ),
               ],
+            ),
+            SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: TextField(
+                controller: _focusController,
+                decoration: InputDecoration(
+                  labelText: 'Focus',
+                  border: OutlineInputBorder(),
+                ),
+              ),
             ),
           ],
         ),

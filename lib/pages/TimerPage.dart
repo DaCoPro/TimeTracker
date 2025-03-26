@@ -17,6 +17,7 @@ class _TimerPageState extends State<TimerPage> {
   bool _isRunning = false;
   bool _hasStarted = false;
   DateTime? _startTime;
+  final TextEditingController _focusController = TextEditingController();
 
   void _startTimer() {
     if (!_isSaved) {
@@ -52,6 +53,9 @@ class _TimerPageState extends State<TimerPage> {
       _isSaved = false; // Reset the saved state when mode is toggled
       _isRunning = false; // Ensure the timer is not running
       _hasStarted = false; // Reset the started state when mode is toggled
+      if (!_isWorkMode) {
+        _focusController.clear(); // Clear the focus input field when switching to break mode
+      }
     });
   }
 
@@ -64,16 +68,22 @@ class _TimerPageState extends State<TimerPage> {
       _isSaved = false; // Allow the timer to be started again after reset
       _isRunning = false; // Ensure the timer is not running
       _hasStarted = false; // Reset the started state
+      if (!_isWorkMode) {
+        _focusController.clear(); // Clear the focus input field when resetting in break mode
+      }
     });
   }
 
   Future<void> _saveTimerData() async {
-    final endTime = DateTime.now();
-    final timerData = TimerData(startTime: _startTime!, endTime: endTime);
-    await TimerService.saveTimerData(timerData);
-    setState(() {
-      _isSaved = true; // Disable the save button after saving
-    });
+    if (_isWorkMode) {
+      final endTime = DateTime.now();
+      final focus = _focusController.text;
+      final timerData = TimerData(startTime: _startTime!, endTime: endTime, focus: focus);
+      await TimerService.saveTimerData(timerData);
+      setState(() {
+        _isSaved = true; // Disable the save button after saving
+      });
+    }
   }
 
   String _formatTime(int seconds) {
@@ -126,11 +136,23 @@ class _TimerPageState extends State<TimerPage> {
                 ),
                 SizedBox(width: 10),
                 ElevatedButton(
-                  onPressed: !_hasStarted || _isRunning || _isSaved ? null : _saveTimerData,
+                  onPressed: !_hasStarted || _isRunning || _isSaved || !_isWorkMode ? null : _saveTimerData,
                   child: Text('Save Timer'),
                 ),
               ],
             ),
+            SizedBox(height: 20),
+            if (_isWorkMode)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: TextField(
+                  controller: _focusController,
+                  decoration: InputDecoration(
+                    labelText: 'Focus',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
